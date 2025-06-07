@@ -14,7 +14,7 @@ func GetAdminUsers(c *fiber.Ctx) error {
 	var response []models.AdminUserResponse
 	for _, admin := range adminUsers {
 		response = append(response, models.AdminUserResponse{
-			ID:        admin.ID,
+			ID:        admin.ID.String(),
 			Username:  admin.Username,
 			Email:     admin.Email,
 			Role:      admin.Role,
@@ -42,7 +42,7 @@ func CreateAdminUser(c *fiber.Ctx) error {
 	database.DB.Create(&adminUser)
 
 	response := models.AdminUserResponse{
-		ID:        adminUser.ID,
+		ID:        adminUser.ID.String(),
 		Username:  adminUser.Username,
 		Email:     adminUser.Email,
 		Role:      adminUser.Role,

@@ -1,6 +1,8 @@
 package models
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -11,8 +13,8 @@ type AdminUser struct {
 	Email     string         `json:"email" gorm:"not null;unique"`
 	Password  string         `json:"-" gorm:"not null"`                            // Password is not exposed in JSON
 	Role      string         `json:"role" gorm:"type:varchar(20);default:'admin'"` // admin, super_admin
-	CreatedAt int64          `json:"created_at" gorm:"autoCreateTime"`
-	UpdatedAt int64          `json:"updated_at" gorm:"autoUpdateTime"`
+	CreatedAt time.Time      `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
 	DeletedAt gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
 }
 
@@ -26,10 +28,10 @@ type AdminUserCreate struct {
 
 // AdminUserResponse represents the admin user data that will be sent in responses
 type AdminUserResponse struct {
-	ID        uuid.UUID `json:"id"`
+	ID        string    `json:"id"`
 	Username  string    `json:"username"`
 	Email     string    `json:"email"`
 	Role      string    `json:"role"`
-	CreatedAt int64     `json:"created_at"`
-	UpdatedAt int64     `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }

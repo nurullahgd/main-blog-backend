@@ -3,13 +3,16 @@ FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
 
-# Copy go mod and sum files
-COPY go.mod ./
+# Install git and build dependencies
+RUN apk add --no-cache git
 
-# Download all dependencies
+# Copy go mod and sum files
+COPY go.mod go.sum ./
+
+# Download dependencies
 RUN go mod download
 
-# Copy the source code
+# Copy source code
 COPY . .
 
 # Build the application
@@ -22,9 +25,13 @@ WORKDIR /app
 
 # Copy the binary from builder
 COPY --from=builder /app/main .
+COPY --from=builder /app/.env .
+
+# Create uploads directory
+RUN mkdir -p uploads
 
 # Expose port
 EXPOSE 8080
 
-# Command to run
+# Run the application
 CMD ["./main"]

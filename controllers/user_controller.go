@@ -18,20 +18,35 @@ func Register(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
 	}
 
+	// Check if email already exists
+	var existingUser models.User
+	if err := database.DB.Where("email = ?", input.Email).First(&existingUser).Error; err == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Email already exists"})
+	}
+
+	// Check if username already exists
+	if err := database.DB.Where("username = ?", input.Username).First(&existingUser).Error; err == nil {
+		return c.Status(400).JSON(fiber.Map{"error": "Username already exists"})
+	}
+
 	hashedPassword, err := helpers.HashPassword(input.Password)
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to hash password"})
 	}
 
 	user := models.User{
-		Name:     input.Name,
-		Surname:  input.Surname,
-		Username: input.Username,
-		Email:    input.Email,
-		Password: []byte(hashedPassword),
+		Name:      input.Name,
+		Surname:   input.Surname,
+		Username:  input.Username,
+		Email:     input.Email,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
+		Password:  []byte(hashedPassword),
 	}
 
-	database.DB.Create(&user)
+	if err := database.DB.Create(&user).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to create user"})
+	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
 		"user_id": user.ID,
@@ -42,13 +57,20 @@ func Register(c *fiber.Ctx) error {
 	if err != nil {
 		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
 	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "user_token",
+		Value:    tokenString,
+		Expires:  time.Now().Add(24 * time.Hour),
+		HTTPOnly: true,
+		Secure:   true,
+	})
 
-	return c.JSON(fiber.Map{"message": "User created successfully", "token": tokenString})
+	return c.JSON(fiber.Map{"message": "User created successfully"})
 }
 
 func Login(c *fiber.Ctx) error {
 	var input struct {
-		Email    string `json:"email"`
+		Input    string `json:"input"`
 		Password string `json:"password"`
 	}
 
@@ -57,7 +79,7 @@ func Login(c *fiber.Ctx) error {
 	}
 
 	var user models.User
-	if err := database.DB.Where("email = ?", input.Email).First(&user).Error; err != nil {
+	if err := database.DB.Where("email = ? OR username = ?", input.Input, input.Input).First(&user).Error; err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
 
@@ -65,35 +87,24 @@ func Login(c *fiber.Ctx) error {
 	if err := helpers.VerifyPassword(input.Password, string(user.Password)); err != nil {
 		return c.Status(401).JSON(fiber.Map{"error": "Invalid credentials"})
 	}
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"user_id": user.ID,
+		"exp":     time.Now().Add(time.Hour * 24).Unix(),
+	})
 
-	// Create session token
-	token := utils.GenerateToken() // Implement this function
-
-	// Set cookie
-	cookie := fiber.Cookie{
-		Name:     "session",
-		Value:    token,
+	tokenString, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
+	if err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to generate token"})
+	}
+	c.Cookie(&fiber.Cookie{
+		Name:     "user_token",
+		Value:    tokenString,
 		Expires:  time.Now().Add(24 * time.Hour),
 		HTTPOnly: true,
 		Secure:   true,
-		SameSite: "None",
-		Path:     "/",
-	}
-	c.Cookie(&cookie)
-
-	return c.JSON(fiber.Map{
-		"message": "Login successful",
-		"user": models.UserResponse{
-			ID:           user.ID,
-			Name:         user.Name,
-			Surname:      user.Surname,
-			Email:        user.Email,
-			ProfileImage: user.ProfileImage,
-			BlogCount:    user.BlogCount,
-			CreatedAt:    user.CreatedAt,
-			UpdatedAt:    user.UpdatedAt,
-		},
 	})
+
+	return c.JSON(fiber.Map{"message": "Login successful"})
 }
 
 func GetUsers(c *fiber.Ctx) error {
@@ -104,7 +115,7 @@ func GetUsers(c *fiber.Ctx) error {
 	var response []models.UserResponse
 	for _, user := range users {
 		response = append(response, models.UserResponse{
-			ID:           user.ID,
+			ID:           user.ID.String(),
 			Name:         user.Name,
 			Surname:      user.Surname,
 			Email:        user.Email,
@@ -125,7 +136,7 @@ func GetUser(c *fiber.Ctx) error {
 	}
 
 	response := models.UserResponse{
-		ID:           user.ID,
+		ID:           user.ID.String(),
 		Name:         user.Name,
 		Surname:      user.Surname,
 		Email:        user.Email,
@@ -138,8 +149,66 @@ func GetUser(c *fiber.Ctx) error {
 	return c.JSON(response)
 }
 
+func EditUser(c *fiber.Ctx) error {
+	// Kullanıcı ID'sini cookie'den al
+	userToken := c.Cookies("user_token")
+	if userToken == "" {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Unauthorized",
+		})
+	}
+
+	// Token'ı doğrula ve kullanıcı ID'sini al
+	userID, err := helpers.GetUserIDFromToken(userToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+			"error": "Invalid token",
+		})
+	}
+
+	// Kullanıcıyı bul
+	var user models.User
+	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"error": "User not found",
+		})
+	}
+
+	// Form verilerini al
+	name := c.FormValue("name")
+	surname := c.FormValue("surname")
+
+	// Sadece değişen alanları güncelle
+	if name != "" {
+		user.Name = name
+	}
+	if surname != "" {
+		user.Surname = surname
+	}
+
+	// Kullanıcıyı güncelle
+	if err := database.DB.Save(&user).Error; err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to update user",
+		})
+	}
+	var userResponse models.UserResponse
+	userResponse.ID = user.ID.String()
+	userResponse.Name = user.Name
+	userResponse.Surname = user.Surname
+	userResponse.Email = user.Email
+	userResponse.ProfileImage = user.ProfileImage
+	userResponse.BlogCount = user.BlogCount
+
+	return c.JSON(userResponse)
+}
+
 func UploadProfileImage(c *fiber.Ctx) error {
-	userID := c.Params("id")
+	userToken := c.Cookies("user_token")
+	userID, err := helpers.GetUserIDFromToken(userToken)
+	if err != nil {
+		return c.Status(401).JSON(fiber.Map{"error": "Unauthorized"})
+	}
 
 	// Get user
 	var user models.User
@@ -151,6 +220,11 @@ func UploadProfileImage(c *fiber.Ctx) error {
 	file, err := c.FormFile("image")
 	if err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "No image file provided"})
+	}
+
+	// Validate file size (max 5MB)
+	if file.Size > 5*1024*1024 {
+		return c.Status(400).JSON(fiber.Map{"error": "File size too large. Maximum size is 5MB"})
 	}
 
 	// Upload to Cloudinary
@@ -167,10 +241,12 @@ func UploadProfileImage(c *fiber.Ctx) error {
 
 	// Update user
 	user.ProfileImage = imageURL
-	database.DB.Save(&user)
+	if err := database.DB.Save(&user).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"error": "Failed to save user profile"})
+	}
 
 	response := models.UserResponse{
-		ID:           user.ID,
+		ID:           user.ID.String(),
 		Name:         user.Name,
 		Surname:      user.Surname,
 		Email:        user.Email,
@@ -181,4 +257,21 @@ func UploadProfileImage(c *fiber.Ctx) error {
 	}
 
 	return c.JSON(response)
+}
+
+func Logout(c *fiber.Ctx) error {
+	// Clear the cookie
+	c.Cookie(&fiber.Cookie{
+		Name:     "user_token",
+		Value:    "",
+		Expires:  time.Now().Add(-1 * time.Hour), // Expire immediately
+		HTTPOnly: true,
+		Secure:   true,
+		SameSite: "None",
+		Path:     "/",
+	})
+
+	return c.JSON(fiber.Map{
+		"message": "Logout successful",
+	})
 }

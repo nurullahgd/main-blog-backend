@@ -5,7 +5,7 @@ import (
 	"encoding/base64"
 )
 
-// GenerateToken creates a random token for session management
+// GenerateToken creates a random token for user_token management
 func GenerateToken() string {
 	b := make([]byte, 32)
 	rand.Read(b)
