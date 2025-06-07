@@ -186,3 +186,59 @@ func UploadBlogImage(c *fiber.Ctx) error {
 
 	return c.JSON(response)
 }
+
+func EditBlog(c *fiber.Ctx) error {
+	blogID := c.Params("id")
+
+	var blog models.Blog
+	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+	}
+
+	blog.Title = c.FormValue("title")
+	blog.Content = c.FormValue("content")
+	blog.Summary = c.FormValue("summary")
+	blog.Category = c.FormValue("category")
+	visibilityStr := c.FormValue("visibility")
+	visibility := visibilityStr == "true" || visibilityStr == "1"
+	blog.Visibility = visibility
+	blog.UpdatedAt = time.Now()
+
+	database.DB.Save(&blog)
+
+	response := models.BlogResponse{
+		ID:         blog.ID.String(),
+		Title:      blog.Title,
+		Content:    blog.Content,
+		Summary:    blog.Summary,
+		Category:   blog.Category,
+		Visibility: blog.Visibility,
+		CreatedAt:  blog.CreatedAt,
+		UpdatedAt:  blog.UpdatedAt,
+	}
+
+	return c.JSON(response)
+}
+
+func DeleteBlog(c *fiber.Ctx) error {
+	userToken := c.Cookies("user_token")
+	userID, err := helpers.GetUserIDFromToken(userToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	blogID := c.Params("id")
+
+	var blog models.Blog
+	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+	}
+
+	if blog.UserID != userID {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{"error": "You are not authorized to delete this blog"})
+	}
+
+	database.DB.Delete(&blog)
+
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Blog deleted successfully"})
+}

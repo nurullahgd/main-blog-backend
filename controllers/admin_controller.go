@@ -52,3 +52,15 @@ func CreateAdminUser(c *fiber.Ctx) error {
 
 	return c.Status(201).JSON(response)
 }
+
+func DeleteBlogFromAdmin(c *fiber.Ctx) error {
+	blogID := c.Params("id")
+
+	var blog models.Blog
+	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+	}
+	database.DB.Delete(&blog)
+
+	return c.Status(200).JSON(fiber.Map{"message": "Blog deleted successfully"})
+}

@@ -97,3 +97,31 @@ func CheckUserID() fiber.Handler {
 		return c.Next()
 	}
 }
+
+func AdminAuthMiddleware() fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		token := c.Cookies("admin_token")
+		if token == "" {
+			return c.Status(401).JSON(fiber.Map{
+				"error": "Unauthorized - No token provided",
+			})
+		}
+
+		claims := jwt.MapClaims{}
+		parsedToken, err := jwt.ParseWithClaims(token, claims, func(token *jwt.Token) (interface{}, error) {
+			return []byte(os.Getenv("JWT_SECRET")), nil
+		})
+
+		if err == nil && parsedToken.Valid {
+			if userID, ok := claims["user_id"].(string); ok {
+				var user models.AdminUser
+				if err := database.DB.First(&user, "id = ?", userID).Error; err == nil {
+					c.Locals("user", user)
+					c.Locals("userID", userID)
+				}
+			}
+		}
+
+		return c.Next()
+	}
+}

@@ -35,7 +35,8 @@ func SetupRoutes(app *fiber.App) {
 	blogRoutes := app.Group("/api/blogs")
 	blogRoutes.Get("/", controllers.GetBlogs)
 	blogRoutes.Get("/:id", controllers.GetBlog)
-	// blogRoutes.Patch("/:id", controllers.UpdateBlog)
+	blogRoutes.Patch("/:id", controllers.EditBlog)
+	blogRoutes.Delete("/:id", controllers.DeleteBlog)
 
 	// Protected blog routes
 	protectedBlogRoutes := blogRoutes.Group("/", middleware.AuthMiddleware())
@@ -43,7 +44,8 @@ func SetupRoutes(app *fiber.App) {
 	protectedBlogRoutes.Post("/:id/main-image", controllers.UploadBlogImage)
 
 	// Admin routes
-	adminRoutes := app.Group("/api/admin", middleware.AuthMiddleware())
+	adminRoutes := app.Group("/api/admin", middleware.AdminAuthMiddleware())
 	adminRoutes.Get("/users", controllers.GetAdminUsers)
 	adminRoutes.Post("/users", controllers.CreateAdminUser)
+	adminRoutes.Delete("/blogDelete/:id", controllers.DeleteBlogFromAdmin)
 }
