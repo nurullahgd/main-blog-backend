@@ -118,6 +118,7 @@ func GetUsers(c *fiber.Ctx) error {
 			ID:           user.ID.String(),
 			Name:         user.Name,
 			Surname:      user.Surname,
+			Username:     user.Username,
 			Email:        user.Email,
 			ProfileImage: user.ProfileImage,
 			BlogCount:    user.BlogCount,
@@ -139,6 +140,7 @@ func GetUser(c *fiber.Ctx) error {
 		ID:           user.ID.String(),
 		Name:         user.Name,
 		Surname:      user.Surname,
+		Username:     user.Username,
 		Email:        user.Email,
 		ProfileImage: user.ProfileImage,
 		BlogCount:    user.BlogCount,
@@ -196,6 +198,7 @@ func EditUser(c *fiber.Ctx) error {
 	userResponse.ID = user.ID.String()
 	userResponse.Name = user.Name
 	userResponse.Surname = user.Surname
+	userResponse.Username = user.Username
 	userResponse.Email = user.Email
 	userResponse.ProfileImage = user.ProfileImage
 	userResponse.BlogCount = user.BlogCount

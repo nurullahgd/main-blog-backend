@@ -36,6 +36,7 @@ type UserResponse struct {
 	ID           string    `json:"id"`
 	Name         string    `json:"name"`
 	Surname      string    `json:"surname"`
+	Username     string    `json:"username"`
 	Email        string    `json:"email"`
 	ProfileImage string    `json:"profile_image"`
 	BlogCount    int       `json:"blog_count"`

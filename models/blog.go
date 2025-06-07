@@ -16,6 +16,7 @@ type Blog struct {
 	UserID     string         `json:"user_id" gorm:"type:uuid;not nullc"`
 	Visibility bool           `json:"visibility" gorm:"default:true"`
 	Category   string         `json:"category" gorm:"not null"`
+	Summary    string         `json:"summary" gorm:"not null"`
 	CreatedAt  time.Time      `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt  time.Time      `json:"updated_at" gorm:"autoUpdateTime"`
 	DeletedAt  gorm.DeletedAt `json:"deleted_at,omitempty" gorm:"index"`
@@ -30,6 +31,7 @@ type BlogCreate struct {
 	UserID     string    `json:"user_id" binding:"required"`
 	Visibility bool      `json:"visibility" binding:"required"`
 	Category   string    `json:"category" binding:"required"`
+	Summary    string    `json:"summary" binding:"required"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }
@@ -44,6 +46,7 @@ type BlogResponse struct {
 	UserID     string    `json:"user_id"`
 	Category   string    `json:"category"`
 	Visibility bool      `json:"visibility"`
+	Summary    string    `json:"summary"`
 	CreatedAt  time.Time `json:"created_at"`
 	UpdatedAt  time.Time `json:"updated_at"`
 }

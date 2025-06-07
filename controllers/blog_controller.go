@@ -66,7 +66,7 @@ func CreateBlog(c *fiber.Ctx) error {
 	visibilityStr := c.FormValue("visibility")
 	slugInput := c.FormValue("slug")
 	category := c.FormValue("category")
-
+	summary := c.FormValue("summary")
 	// Visibility değerini boolean'a çevir
 	visibility := visibilityStr == "true" || visibilityStr == "1"
 
@@ -112,6 +112,7 @@ func CreateBlog(c *fiber.Ctx) error {
 		Visibility: visibility,
 		Slug:       uniqueSlug,
 		Category:   category,
+		Summary:    summary,
 		CreatedAt:  time.Now(),
 		UpdatedAt:  time.Now(),
 	}
@@ -133,6 +134,7 @@ func CreateBlog(c *fiber.Ctx) error {
 		UserID:     blog.UserID,
 		Category:   blog.Category,
 		Visibility: blog.Visibility,
+		Summary:    blog.Summary,
 		CreatedAt:  blog.CreatedAt,
 		UpdatedAt:  blog.UpdatedAt,
 	}
@@ -177,6 +179,7 @@ func UploadBlogImage(c *fiber.Ctx) error {
 		Content:   blog.Content,
 		MainImage: blog.MainImage,
 		UserID:    blog.UserID,
+		Summary:   blog.Summary,
 		CreatedAt: blog.CreatedAt,
 		UpdatedAt: blog.UpdatedAt,
 	}
