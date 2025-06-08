@@ -34,13 +34,14 @@ func GetBlogs(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func GetBlog(c *fiber.Ctx) error {
+	blogID := c.Params("id")
 	var blog models.Blog
-	if err := database.DB.First(&blog, "id = ?", c.Params("id")).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Blog not found"})
 	}
 
 	response := models.BlogResponse{
@@ -53,7 +54,7 @@ func GetBlog(c *fiber.Ctx) error {
 		UpdatedAt: blog.UpdatedAt,
 	}
 
-	return c.JSON(response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func CreateBlog(c *fiber.Ctx) error {
@@ -151,19 +152,19 @@ func UploadBlogImage(c *fiber.Ctx) error {
 	// Get blog
 	var blog models.Blog
 	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Blog not found"})
 	}
 
 	// Get file from form
 	file, err := c.FormFile("image")
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": "No image file provided"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "No image file provided"})
 	}
 
 	// Upload to Cloudinary
 	imageURL, err := utils.UploadToCloudinary(file, "blog_images")
 	if err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	// Delete old image if exists
@@ -187,7 +188,7 @@ func UploadBlogImage(c *fiber.Ctx) error {
 		UpdatedAt: blog.UpdatedAt,
 	}
 
-	return c.JSON(response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func EditBlog(c *fiber.Ctx) error {
@@ -195,7 +196,7 @@ func EditBlog(c *fiber.Ctx) error {
 
 	var blog models.Blog
 	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Blog not found"})
 	}
 
 	blog.Title = c.FormValue("title")
@@ -220,7 +221,7 @@ func EditBlog(c *fiber.Ctx) error {
 		UpdatedAt:  blog.UpdatedAt,
 	}
 
-	return c.JSON(response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func DeleteBlog(c *fiber.Ctx) error {

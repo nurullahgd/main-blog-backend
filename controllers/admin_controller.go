@@ -23,13 +23,13 @@ func GetAdminUsers(c *fiber.Ctx) error {
 		})
 	}
 
-	return c.JSON(response)
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func CreateAdminUser(c *fiber.Ctx) error {
 	var input models.AdminUserCreate
 	if err := c.BodyParser(&input); err != nil {
-		return c.Status(400).JSON(fiber.Map{"error": err.Error()})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	adminUser := models.AdminUser{
@@ -50,7 +50,7 @@ func CreateAdminUser(c *fiber.Ctx) error {
 		UpdatedAt: adminUser.UpdatedAt,
 	}
 
-	return c.Status(201).JSON(response)
+	return c.Status(fiber.StatusCreated).JSON(response)
 }
 
 func DeleteBlogFromAdmin(c *fiber.Ctx) error {
@@ -58,11 +58,11 @@ func DeleteBlogFromAdmin(c *fiber.Ctx) error {
 
 	var blog models.Blog
 	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Blog not found"})
 	}
 	database.DB.Delete(&blog)
 
-	return c.Status(200).JSON(fiber.Map{"message": "Blog deleted successfully"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Blog deleted successfully"})
 }
 
 func DeleteUserFromAdmin(c *fiber.Ctx) error {
@@ -70,9 +70,9 @@ func DeleteUserFromAdmin(c *fiber.Ctx) error {
 
 	var user models.User
 	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
-		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
 	}
 	database.DB.Delete(&user)
 
-	return c.Status(200).JSON(fiber.Map{"message": "User deleted successfully"})
+	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "User deleted successfully"})
 }
