@@ -18,7 +18,7 @@ func SetupRoutes(app *fiber.App) {
 		return c.Next()
 	})
 
-	// User routes
+	// User routes (user panel)
 	userRoutes := app.Group("/api/users")
 	userRoutes.Get("/", controllers.GetUsers)
 	userRoutes.Get("/:id", controllers.GetUser)
@@ -26,26 +26,31 @@ func SetupRoutes(app *fiber.App) {
 	userRoutes.Post("/login", controllers.Login)
 	userRoutes.Post("/logout", controllers.Logout)
 
-	// Protected user routes
+	// Protected user routes (user panel)
 	protectedUserRoutes := userRoutes.Group("/", middleware.AuthMiddleware())
 	protectedUserRoutes.Put("/edit", controllers.EditUser)
 	protectedUserRoutes.Post("/profile-image", controllers.UploadProfileImage)
 
-	// Blog routes
+	// Blog routes (blog panel)
 	blogRoutes := app.Group("/api/blogs")
 	blogRoutes.Get("/", controllers.GetBlogs)
 	blogRoutes.Get("/:id", controllers.GetBlog)
-	blogRoutes.Patch("/:id", controllers.EditBlog)
-	blogRoutes.Delete("/:id", controllers.DeleteBlog)
 
-	// Protected blog routes
+	// Protected blog routes (blog panel)
 	protectedBlogRoutes := blogRoutes.Group("/", middleware.AuthMiddleware())
+	protectedBlogRoutes.Get("/getMyBlogs", controllers.GetMyBlogs)
 	protectedBlogRoutes.Post("/createBlog", controllers.CreateBlog)
+	protectedBlogRoutes.Post("/visibility/:id", controllers.ChangeVisibility)
+	protectedBlogRoutes.Patch("/:id", controllers.EditBlog)
+	protectedBlogRoutes.Delete("/:id", controllers.DeleteBlog)
 	protectedBlogRoutes.Post("/:id/main-image", controllers.UploadBlogImage)
 
-	// Admin routes
+	// Admin routes (admin panel)
 	adminRoutes := app.Group("/api/admin", middleware.AdminAuthMiddleware())
+	adminRoutes.Get("/getUsers", controllers.GetUsers)
+	adminRoutes.Delete("/blogDelete/:id", controllers.DeleteBlogFromAdmin)
+	adminRoutes.Delete("/userDelete/:id", controllers.DeleteUserFromAdmin)
+
 	adminRoutes.Get("/users", controllers.GetAdminUsers)
 	adminRoutes.Post("/users", controllers.CreateAdminUser)
-	adminRoutes.Delete("/blogDelete/:id", controllers.DeleteBlogFromAdmin)
 }

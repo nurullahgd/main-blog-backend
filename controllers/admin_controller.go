@@ -64,3 +64,15 @@ func DeleteBlogFromAdmin(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{"message": "Blog deleted successfully"})
 }
+
+func DeleteUserFromAdmin(c *fiber.Ctx) error {
+	userID := c.Params("id")
+
+	var user models.User
+	if err := database.DB.First(&user, "id = ?", userID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "User not found"})
+	}
+	database.DB.Delete(&user)
+
+	return c.Status(200).JSON(fiber.Map{"message": "User deleted successfully"})
+}

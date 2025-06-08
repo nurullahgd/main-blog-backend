@@ -15,19 +15,22 @@ import (
 
 func GetBlogs(c *fiber.Ctx) error {
 	var blogs []models.Blog
-	database.DB.Find(&blogs)
+	database.DB.Where("visibility = ?", true).Find(&blogs)
 
 	// Convert to response format
 	var response []models.BlogResponse
 	for _, blog := range blogs {
 		response = append(response, models.BlogResponse{
-			ID:        blog.ID.String(),
-			Title:     blog.Title,
-			Content:   blog.Content,
-			MainImage: blog.MainImage,
-			UserID:    blog.UserID,
-			CreatedAt: blog.CreatedAt,
-			UpdatedAt: blog.UpdatedAt,
+			ID:         blog.ID.String(),
+			Title:      blog.Title,
+			Content:    blog.Content,
+			MainImage:  blog.MainImage,
+			UserID:     blog.UserID,
+			Category:   blog.Category,
+			Visibility: blog.Visibility,
+			Summary:    blog.Summary,
+			CreatedAt:  blog.CreatedAt,
+			UpdatedAt:  blog.UpdatedAt,
 		})
 	}
 
@@ -241,4 +244,31 @@ func DeleteBlog(c *fiber.Ctx) error {
 	database.DB.Delete(&blog)
 
 	return c.Status(fiber.StatusOK).JSON(fiber.Map{"message": "Blog deleted successfully"})
+}
+
+func ChangeVisibility(c *fiber.Ctx) error {
+	blogID := c.Params("id")
+
+	var blog models.Blog
+	if err := database.DB.First(&blog, "id = ?", blogID).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"error": "Blog not found"})
+	}
+
+	blog.Visibility = !blog.Visibility
+	database.DB.Save(&blog)
+
+	return c.JSON(fiber.Map{"message": "Visibility changed successfully"})
+}
+
+func GetMyBlogs(c *fiber.Ctx) error {
+	userToken := c.Cookies("user_token")
+	userID, err := helpers.GetUserIDFromToken(userToken)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})
+	}
+
+	var blogs []models.Blog
+	database.DB.Where("user_id = ?", userID).Find(&blogs)
+
+	return c.JSON(blogs)
 }
