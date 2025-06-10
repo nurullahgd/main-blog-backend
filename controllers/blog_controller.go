@@ -45,13 +45,17 @@ func GetBlog(c *fiber.Ctx) error {
 	}
 
 	response := models.BlogResponse{
-		ID:        blog.ID.String(),
-		Title:     blog.Title,
-		Content:   blog.Content,
-		MainImage: blog.MainImage,
-		UserID:    blog.UserID,
-		CreatedAt: blog.CreatedAt,
-		UpdatedAt: blog.UpdatedAt,
+		ID:         blog.ID.String(),
+		Title:      blog.Title,
+		Content:    blog.Content,
+		MainImage:  blog.MainImage,
+		Slug:       blog.Slug,
+		Category:   blog.Category,
+		Summary:    blog.Summary,
+		Visibility: blog.Visibility,
+		UserID:     blog.UserID,
+		CreatedAt:  blog.CreatedAt,
+		UpdatedAt:  blog.UpdatedAt,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)
@@ -261,8 +265,9 @@ func ChangeVisibility(c *fiber.Ctx) error {
 	return c.JSON(fiber.Map{"message": "Visibility changed successfully"})
 }
 
-func GetMyBlogs(c *fiber.Ctx) error {
+func FetchMyBlogs(c *fiber.Ctx) error {
 	userToken := c.Cookies("user_token")
+	fmt.Println("userToken", userToken)
 	userID, err := helpers.GetUserIDFromToken(userToken)
 	if err != nil {
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Unauthorized"})

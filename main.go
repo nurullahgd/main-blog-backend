@@ -37,7 +37,7 @@ func main() {
 
 	// CORS configuration
 	app.Use(cors.New(cors.Config{
-		AllowOrigins:     "https://your-frontend-domain.com,http://localhost:8000", // Frontend domaininizi buraya ekleyin
+		AllowOrigins:     "http://localhost:8000", // Frontend domaininizi buraya ekleyin
 		AllowMethods:     "GET,POST,PUT,DELETE,OPTIONS",
 		AllowHeaders:     "Origin, Content-Type, Accept, Authorization",
 		AllowCredentials: true,  // Important for cookies

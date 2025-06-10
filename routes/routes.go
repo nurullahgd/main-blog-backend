@@ -7,17 +7,6 @@ import (
 )
 
 func SetupRoutes(app *fiber.App) {
-	// CORS middleware
-	app.Use(func(c *fiber.Ctx) error {
-		c.Set("Access-Control-Allow-Origin", "*")
-		c.Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
-		c.Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		if c.Method() == "OPTIONS" {
-			return c.SendStatus(204)
-		}
-		return c.Next()
-	})
-
 	// User routes (user panel)
 	userRoutes := app.Group("/api/users")
 	userRoutes.Get("/", controllers.GetUsers)
@@ -31,19 +20,22 @@ func SetupRoutes(app *fiber.App) {
 	protectedUserRoutes.Put("/edit", controllers.EditUser)
 	protectedUserRoutes.Post("/profile-image", controllers.UploadProfileImage)
 
-	// Blog routes (blog panel)
-	blogRoutes := app.Group("/api/blogs")
-	blogRoutes.Get("/", controllers.GetBlogs)
-	blogRoutes.Get("/:id", controllers.GetBlog)
+// Blog routes (blog panel)
+blogRoutes := app.Group("/api/blogs")
+blogRoutes.Get("/", controllers.GetBlogs)
 
-	// Protected blog routes (blog panel)
-	protectedBlogRoutes := blogRoutes.Group("/", middleware.AuthMiddleware())
-	protectedBlogRoutes.Get("/getMyBlogs", controllers.GetMyBlogs)
-	protectedBlogRoutes.Post("/createBlog", controllers.CreateBlog)
-	protectedBlogRoutes.Post("/visibility/:id", controllers.ChangeVisibility)
-	protectedBlogRoutes.Patch("/:id", controllers.EditBlog)
-	protectedBlogRoutes.Delete("/:id", controllers.DeleteBlog)
-	protectedBlogRoutes.Post("/:id/main-image", controllers.UploadBlogImage)
+// Daha spesifik route'lar önce gelmeli
+// Protected blog routes (blog panel)
+protectedBlogRoutes := blogRoutes.Group("/", middleware.AuthMiddleware())
+protectedBlogRoutes.Get("/fetchBlogs", controllers.FetchMyBlogs)
+protectedBlogRoutes.Post("/createBlog", controllers.CreateBlog)
+protectedBlogRoutes.Post("/visibility/:id", controllers.ChangeVisibility)
+protectedBlogRoutes.Post("/editBlog/:id", controllers.EditBlog)
+protectedBlogRoutes.Delete("/:id", controllers.DeleteBlog)
+protectedBlogRoutes.Post("/:id/main-image", controllers.UploadBlogImage)
+
+// En sona bırak: ID ile yapılan get işlemi
+blogRoutes.Get("/:id", controllers.GetBlog)
 
 	// Admin routes (admin panel)
 	adminRoutes := app.Group("/api/admin", middleware.AdminAuthMiddleware())
