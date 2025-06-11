@@ -93,12 +93,6 @@ docker-compose up -d
 - `PUT /api/blogs/:id` - Update blog post
 - `DELETE /api/blogs/:id` - Delete blog post
 
-## 🧪 Testing
-
-To run tests:
-```bash
-go test ./tests/...
-```
 
 ## 📝 License
 
