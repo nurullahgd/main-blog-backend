@@ -93,7 +93,6 @@ docker-compose up -d
 - `PUT /api/blogs/:id` - Update blog post
 - `DELETE /api/blogs/:id` - Delete blog post
 
-
 ## 📝 License
 
 This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
@@ -107,7 +106,5 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 5. Open a Pull Request
 
 ## 📞 Contact
-
-Tests coming soon
 
 Nurullah Gündoğdu - [@nurullahgd](https://github.com/nurullahgd) (https://github.com/nurullahgd)
